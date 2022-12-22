@@ -10,12 +10,14 @@ class I2C:
     _devices = []
     led = None
     led_timer = None
+    wdt = None
 
-    def __init__(self, *args, i2c: machine.I2C, **kwargs):
+    def __init__(self, *args, i2c: machine.I2C, wdt, **kwargs):
         self._i2c = i2c
         # self._devices = kwargs.pop("devices", self._i2c.scan())
         self._device = kwargs.pop("device", self.DEFAULT_ADDRESS)
         self.led = kwargs.get("led", None)
+        self.wdt = wdt
 
     def format_output(self):
         return "Add:{}".format(self._device)
@@ -26,6 +28,7 @@ class I2C:
     def print(self, *args):
         try:
             print(self.read())
+            self.wdt.feed()
         except Exception as e:
             print(e)
             self.led.on()

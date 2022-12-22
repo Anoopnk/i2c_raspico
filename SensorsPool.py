@@ -30,10 +30,11 @@ class SensorsPool:
     _devices = []
     _sensors = {}
 
-    def __init__(self, *args, i2c: machine.I2C, led: machine.Pin = None, **kwargs):
+    def __init__(self, *args, i2c: machine.I2C, led: machine.Pin = None, wdt=None, **kwargs):
         self._i2c = i2c
         self._devices = self._i2c.scan()
         self._led = led
+        self._wdt = wdt
         self._led_timer = kwargs.get("led_timer", None)
         self.print_config()
 
@@ -45,7 +46,7 @@ class SensorsPool:
                 if dev in range(*sensor["Range"]):
                     if sensor["Name"] not in self._sensors:
                         self._sensors[sensor["Name"]] = []
-                    self._sensors[sensor["Name"]].append(sensor["Class"](i2c=self._i2c, device=dev, led=self._led))
+                    self._sensors[sensor["Name"]].append(sensor["Class"](i2c=self._i2c, device=dev, led=self._led, wdt=self._wdt))
                     break
 
         print("Completed populating sensors pool!")

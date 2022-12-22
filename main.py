@@ -9,6 +9,7 @@ SDA = 4
 
 led = machine.Pin(25, machine.Pin.OUT)
 timer_led = machine.Timer()
+wdt = machine.WDT(timeout=8300)
 
 
 class Timer:
@@ -48,9 +49,10 @@ timer_led.init(freq=30, mode=machine.Timer.PERIODIC, callback=led_toggle)
 time.sleep(1)
 
 timer_led.init(freq=2, mode=machine.Timer.PERIODIC, callback=led_toggle)
-rpi = SensorsPool(i2c=i2c, led=led, led_timer=timer_led)
+rpi = SensorsPool(i2c=i2c, led=led, led_timer=timer_led, wdt=wdt)
 time.sleep(2)
 timer_led.deinit()
+
 
 def func_quit():
     inf_run.status = False
@@ -94,7 +96,7 @@ def func_all():
 
     acc_key = SensorsPool.SENSOR_DATA["Accelerometer"]["Name"]
     if acc_key:
-        timers.add(freq=10, mode=machine.Timer.PERIODIC, callback=rpi.get_sensors(acc_key)[0].print)
+        timers.add(freq=5, mode=machine.Timer.PERIODIC, callback=rpi.get_sensors(acc_key)[0].print)
 
     bar_key = SensorsPool.SENSOR_DATA["Barometer"]["Name"]
     if bar_key:
