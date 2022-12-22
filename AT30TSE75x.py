@@ -50,7 +50,7 @@ class AT30TSE75x(I2C):
         return self.read_temp()
 
     def format_output(self):
-        return "Add:{address} T:{temp}".format(temp=self.read_temp1(), address=self._device & 0x7)
+        return "T:{temp} Add:{address}".format(temp=self.read_temp1(), address=self._device & 0x7)
 
     def read_temp_raw(self, n_bytes=2, return_int=True):
         if return_int:

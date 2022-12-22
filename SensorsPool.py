@@ -3,14 +3,28 @@ import time
 
 from AT30TSE75x import AT30TSE75x
 from BME280 import BME280
-
-Barometer = "Barometer (P:hPa, t:C, H:%rH)"
-Temperature = "Temperature (T:C)"
+from ADXL355 import ADXL355
 
 
 class SensorsPool:
-    TEMPERATURE_SENSOR_ADDRESS_RANGE = (0x48, 0x4F + 0x1)
-    BAROMETER_SENSOR_ADDRESS_RANGE = (0X76, 0X76 + 0x1)
+
+    SENSOR_DATA = {
+        "Temperature": {
+            "Range": (0x48, 0x4F + 0x1),
+            "Name": "Temperature (T:C)",
+            "Class": AT30TSE75x
+        },
+        "Barometer": {
+            "Range": (0X76, 0X76 + 0x1),
+            "Name": "Barometer (P:hPa, t:C, H:%rH)",
+            "Class": BME280
+        },
+        "Accelerometer": {
+            "Range": (0x1D, 0x1D + 0x1),
+            "Name": "Accelerometer (x, y, z)",
+            "Class": ADXL355
+        },
+    }
 
     _i2c = machine.I2C(0)
     _devices = []
@@ -20,36 +34,37 @@ class SensorsPool:
         self._i2c = i2c
         self._devices = self._i2c.scan()
         self._led = led
+        self._led_timer = kwargs.get("led_timer", None)
         self.print_config()
 
         self.spool_sensors()
 
     def spool_sensors(self):
         for dev in self._devices:
-            if dev in range(*self.TEMPERATURE_SENSOR_ADDRESS_RANGE):
-                if Temperature not in self._sensors:
-                    self._sensors[Temperature] = []
-                self._sensors[Temperature].append(AT30TSE75x(i2c=self._i2c, device=dev))
-            elif dev in range(*self.BAROMETER_SENSOR_ADDRESS_RANGE):
-                if Barometer not in self._sensors:
-                    self._sensors[Barometer] = []
-                self._sensors[Barometer].append(BME280(i2c=self._i2c, device=dev))
-                pass
+            for sensor in self.SENSOR_DATA.values():
+                if dev in range(*sensor["Range"]):
+                    if sensor["Name"] not in self._sensors:
+                        self._sensors[sensor["Name"]] = []
+                    self._sensors[sensor["Name"]].append(sensor["Class"](i2c=self._i2c, device=dev, led=self._led))
+                    break
 
         print("Completed populating sensors pool!")
 
-    def read(self):
+    def read(self, key_only=None, name=False):
         for key, devs in self._sensors.items():
-            print("{}:".format(key))
+            if key_only is not None and key_only != key:
+                continue
+            if name:
+                print("{}:".format(key))
             for dev in devs:
-                time.sleep_ms(100)
                 try:
                     print(dev.read())
                 except Exception as e:
                     if self._led:
                         self._led.on()
-                    print("Error on dev {} \n{}".format(dev, e))
-            print("-"*10)
+                    print("Error on dev {} - {}".format(dev, e))
+            if name:
+                print("-"*10)
 
     def timer_read(self, timer=None):
         self.read()

@@ -8,17 +8,27 @@ class I2C:
 
     _device = const(0x00)
     _devices = []
+    led = None
+    led_timer = None
 
     def __init__(self, *args, i2c: machine.I2C, **kwargs):
         self._i2c = i2c
         # self._devices = kwargs.pop("devices", self._i2c.scan())
         self._device = kwargs.pop("device", self.DEFAULT_ADDRESS)
+        self.led = kwargs.get("led", None)
 
     def format_output(self):
         return "Add:{}".format(self._device)
 
-    def read(self):
+    def read(self, *args):
         return self.format_output()
+
+    def print(self, *args):
+        try:
+            print(self.read())
+        except Exception as e:
+            print(e)
+            self.led.on()
 
     def reg_read(self, add, reg, nbytes=1) -> bytes:
         return self.i2c_read(self._i2c, add, reg, nbytes)
