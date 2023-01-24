@@ -24,6 +24,7 @@ class AT30TSE75x(I2C):
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
+        self.set_to_12bit()
 
     def read_temp1(self, n_bytes=2):
         raw_temperature = self.read_temp_raw(n_bytes=n_bytes)
@@ -38,19 +39,22 @@ class AT30TSE75x(I2C):
     def read_temp(self, n_bytes=2):
         raw_temperature = self.read_temp_raw(n_bytes=n_bytes, return_int=False)
 
-        temp = raw_temperature[0]
-        if temp > 0:
-            deci = raw_temperature[1] >> 4
+        temp_raw = (raw_temperature[0] << 8 | raw_temperature[1]) >> 4
+        if temp_raw & 0x800:
+            temp_c = (temp_raw - 0x1000) * 0.0625
         else:
-            deci = ~(raw_temperature[1] >> 4) + 1
-        return temp + (deci * self.STEP_12BIT)
+            temp_c = temp_raw * 0.0625
+        return temp_c
+
+    def set_to_12bit(self):
+        self.dev_write(0xAC, 0x80)
 
     @property
     def temp(self):
         return self.read_temp()
 
     def format_output(self):
-        return "T:{temp} Add:{address}".format(temp=self.read_temp1(), address=self._device & 0x7)
+        return "T:{temp} Add:{address}".format(temp=self.read_temp(), address=self._device & 0x7)
 
     def read_temp_raw(self, n_bytes=2, return_int=True):
         if return_int:
