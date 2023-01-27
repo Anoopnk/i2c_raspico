@@ -46,7 +46,10 @@ class SensorsPool:
                 if dev in range(*sensor["Range"]):
                     if sensor["Name"] not in self._sensors:
                         self._sensors[sensor["Name"]] = []
-                    self._sensors[sensor["Name"]].append(sensor["Class"](i2c=self._i2c, device=dev, led=self._led, wdt=self._wdt))
+                    self._sensors[sensor["Name"]].append(
+                        sensor["Class"](i2c=self._i2c, device=dev,
+                                        led=self._led, wdt=self._wdt,
+                                        name=sensor["Name"]))
                     break
 
         print("Completed populating sensors pool!")

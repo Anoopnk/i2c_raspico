@@ -1,4 +1,5 @@
 import machine
+import time
 import ustruct
 from micropython import const
 
@@ -18,6 +19,7 @@ class I2C:
         self._device = kwargs.pop("device", self.DEFAULT_ADDRESS)
         self.led = kwargs.get("led", None)
         self.wdt = wdt
+        self.name = kwargs.get("name", "undefined")
 
     def format_output(self):
         return "Add:{}".format(self._device)
@@ -34,7 +36,12 @@ class I2C:
             self.led.on()
 
     def reg_read(self, add, reg, nbytes=1) -> bytes:
-        return self.i2c_read(self._i2c, add, reg, nbytes)
+        try:
+            return self.i2c_read(self._i2c, add, reg, nbytes)
+        except Exception as e:
+            print("DEBUG: Name {} Add {} Reg {} Bytes {}".format(self.name, hex(add).upper(), hex(reg).upper(), nbytes))
+            print(e)
+            time.sleep(0.005)
 
     def dev_read_hex(self, *args):
         return hex(ord(self.dev_read(*args)))
@@ -77,11 +84,7 @@ class I2C:
             return b""
 
         # Request data from specified register(s) over I2C
-        try:
-            data = i2c.readfrom_mem(addr, reg, nbytes)
-        except Exception as e:
-            print("DEBUG: Add {} Reg {} Bytes {}".format(hex(addr).upper(), hex(reg).upper(), nbytes))
-            raise e
+        data = i2c.readfrom_mem(addr, reg, nbytes)
 
         return data
 
